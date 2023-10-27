@@ -18,9 +18,9 @@ export default {
     onMounted(async () => {
 
       const response = await axios.get('https://vuetestti.s3.us-east-1.amazonaws.com/data.json'); 
-
-      // Extraia os labels e dados da resposta da API
       const data = response.data;
+
+      console.log(data)
 
       chart.value = new Chart(chart.value, {
         type: 'line',
