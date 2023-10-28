@@ -1,7 +1,6 @@
 <template>
   <div class="chart">
     <canvas ref="chart"></canvas>
-    <p>Clique do gráfico para <span>ativar</span> e <span>desativar</span> o zoom</p>
   </div>
 </template>
 
@@ -192,7 +191,7 @@ export default {
 
             chart.update();
           },
-
+          maintainAspectRatio: false,
           scales: {
             x: {
               grid: {
@@ -259,5 +258,12 @@ p {
 span {
   color: #495057;
   font-weight: 600;
+}
+
+@media (max-width: 800px){
+  .chart {
+    width: 98vw;
+    padding: 24px 6px;
+  }
 }
 </style>
