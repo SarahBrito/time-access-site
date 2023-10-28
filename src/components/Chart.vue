@@ -1,21 +1,25 @@
 <template>
   <div class="chart">
     <canvas ref="chart"></canvas>
+    <p>Clique do gráfico para <span>ativar</span> e <span>desativar</span> o zoom</p>
   </div>
 </template>
 
 <script>
 import 'chartjs-adapter-date-fns';
+import {formatedDate} from '../utils/formatedDate'
+
 import { ref, onMounted } from 'vue';
 import { Chart, registerables } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 Chart.register(...registerables);
+Chart.register(zoomPlugin);
 
 const sortDates = (values) => {
   return values.sort((value1, value2) => {
     const dateA = new Date(value1.dateAccessed);
     const dateB = new Date(value2.dateAccessed);
-
     return dateA - dateB;
   })
 }
@@ -25,11 +29,10 @@ const labelsFormat = (values) => {
   const uniqLabels = values.reduce((accumulator, value) => {
     if (!accumulator[value.dateAccessed]) accumulator[value.dateAccessed] = {
       date: value.dateAccessed,
-      website: value.url,
+      website: value.url.replace(/https:\/\//, '').replace(/\.com/, ''),
     };
     return accumulator;
   }, {})
-
 
   return Object.keys(uniqLabels)
 }
@@ -54,7 +57,7 @@ export default {
 
       const emptyDataSets = websites.map((website) => {
         return {
-          label: website,
+          label: website.replace(/https:\/\//, ''),
           data: [],
           borderWidth: 1.5,
           pointRadius: 0.1,
@@ -66,11 +69,43 @@ export default {
 
       sortedFile.forEach((value) => {
         datasets.forEach((dataset) => {
-          if (value.url === dataset.label) {
+          if (value.url.replace(/https:\/\//, '') === dataset.label) {
             dataset.data.push(value.timeSpent)
           }
         })
       })
+
+      const zoomOptions = {
+
+        pan: {
+          enabled: true,
+
+        },
+        zoom: {
+          wheel: {
+            enabled: false,
+          },
+          pinch: {
+            enabled: false
+          },
+          mode: 'xy',
+        }
+      };
+
+
+      const borderPlugin = {
+        id: 'chartAreaBorder',
+        beforeDraw(chart, args, options) {
+          const { ctx, chartArea: { left, top, width, height } } = chart;
+          if (chart.options.plugins.zoom.zoom.wheel.enabled) {
+            ctx.save();
+            ctx.strokeStyle = '#6c757d';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(left, top, width, height);
+            ctx.restore();
+          }
+        }
+      };
 
       chart.value = new Chart(chart.value, {
         type: 'line',
@@ -81,9 +116,38 @@ export default {
         options: {
           locale: 'pt-BR',
           responsive: true,
-          plugins: {
-            //add line plugin
 
+          interaction: {
+            mode: 'index',
+          },
+          plugins: {
+            tooltip: {
+              backgroundColor:'#22223b',
+              titleAlign: 'center',
+              usePointStyle: true,
+              padding: 16,
+              boxPadding: 4,
+              displayColors: true,
+              callbacks: {
+                labelPointStyle: function (context) {
+                  return {
+                    pointStyle: 'rectRounded',
+                    rotation: 0
+                  };
+                },
+                labelTextColor: function (context) {
+                  return '#eeee';
+                },
+                title: function (context) {
+                  const date = context[0].label
+                  const newDate = date.replace(', 12:00:00 a.m.', '')
+
+                  return formatedDate(newDate)                  
+                },
+              }
+            },
+            //add line plugin
+            zoom: zoomOptions,
             title: {  //add style title 
               display: true,
               align: 'start',
@@ -114,14 +178,20 @@ export default {
                 boxHeight: 20,
                 usePointStyle: true,
                 pointStyle: 'rectRounded',
-                padding: 24
-                
+                padding: 24,
               }
             },
-           
-
 
           },
+
+          onClick(e) {
+            const chart = e.chart;
+            chart.options.plugins.zoom.zoom.wheel.enabled = !chart.options.plugins.zoom.zoom.wheel.enabled;
+            chart.options.plugins.zoom.zoom.pinch.enabled = !chart.options.plugins.zoom.zoom.pinch.enabled;
+
+            chart.update();
+          },
+
           scales: {
             x: {
               grid: {
@@ -135,7 +205,6 @@ export default {
               ticks: {
                 callback: (value, _index, _ticks) => {
                   const date = new Date(value)
-
                   return new Intl.DateTimeFormat('pt-BR', {
                     month: 'short'
                   }).format(date)
@@ -149,6 +218,7 @@ export default {
             },
           },
         },
+        plugins: [borderPlugin],
       });
     });
 
@@ -159,12 +229,24 @@ export default {
 
 <style scoped>
 .chart {
+  font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
-  width: 50%;
-  height: 500px;
+  width: 60%;
   padding: 24px;
   border-radius: 10px;
   box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
+}
+
+p {
+  color: #6c757d;
+  padding: 5px;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+span {
+  color: #495057;
+  font-weight: 600;
 }
 </style>
