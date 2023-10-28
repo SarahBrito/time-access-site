@@ -7,6 +7,8 @@
 
 <script>
 import 'chartjs-adapter-date-fns';
+import {formatedDate} from '../utils/formatedDate'
+
 import { ref, onMounted } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -18,7 +20,6 @@ const sortDates = (values) => {
   return values.sort((value1, value2) => {
     const dateA = new Date(value1.dateAccessed);
     const dateB = new Date(value2.dateAccessed);
-
     return dateA - dateB;
   })
 }
@@ -32,7 +33,6 @@ const labelsFormat = (values) => {
     };
     return accumulator;
   }, {})
-
 
   return Object.keys(uniqLabels)
 }
@@ -117,7 +117,35 @@ export default {
           locale: 'pt-BR',
           responsive: true,
 
+          interaction: {
+            mode: 'index',
+          },
           plugins: {
+            tooltip: {
+              backgroundColor:'#22223b',
+              titleAlign: 'center',
+              usePointStyle: true,
+              padding: 16,
+              boxPadding: 4,
+              displayColors: true,
+              callbacks: {
+                labelPointStyle: function (context) {
+                  return {
+                    pointStyle: 'rectRounded',
+                    rotation: 0
+                  };
+                },
+                labelTextColor: function (context) {
+                  return '#eeee';
+                },
+                title: function (context) {
+                  const date = context[0].label
+                  const newDate = date.replace(', 12:00:00 a.m.', '')
+
+                  return formatedDate(newDate)                  
+                },
+              }
+            },
             //add line plugin
             zoom: zoomOptions,
             title: {  //add style title 
@@ -151,7 +179,6 @@ export default {
                 usePointStyle: true,
                 pointStyle: 'rectRounded',
                 padding: 24,
-
               }
             },
 
@@ -164,9 +191,6 @@ export default {
 
             chart.update();
           },
-
-
-
 
           scales: {
             x: {
@@ -181,7 +205,6 @@ export default {
               ticks: {
                 callback: (value, _index, _ticks) => {
                   const date = new Date(value)
-
                   return new Intl.DateTimeFormat('pt-BR', {
                     month: 'short'
                   }).format(date)
