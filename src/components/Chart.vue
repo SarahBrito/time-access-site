@@ -20,15 +20,16 @@ const sortDates = (values) => {
   })
 }
 
+
 const labelsFormat = (values) => {
   const uniqLabels = values.reduce((accumulator, value) => {
     if (!accumulator[value.dateAccessed]) accumulator[value.dateAccessed] = {
       date: value.dateAccessed,
-      website: value.url
+      website: value.url,
     };
-
     return accumulator;
   }, {})
+
 
   return Object.keys(uniqLabels)
 }
@@ -48,7 +49,7 @@ export default {
       const websites = Object.keys(sortedFile.reduce((accumulator, value) => {
         if (!accumulator[value.url]) accumulator[value.url] = []
 
-        return accumulator;
+        return accumulator
       }, {}))
 
       const emptyDataSets = websites.map((website) => {
@@ -80,6 +81,47 @@ export default {
         options: {
           locale: 'pt-BR',
           responsive: true,
+          plugins: {
+            //add line plugin
+
+            title: {  //add style title 
+              display: true,
+              align: 'start',
+              text: 'Sites',
+              color: '#495057',
+              font: {
+                size: 20,
+                weight: 'bold',
+              },
+            },
+            subtitle: { //add style subtitle
+              display: true,
+              align: 'start',
+              text: 'Veja os acessos de cada site',
+              color: '#6c757d',
+              font: {
+                size: 14,
+                weight: 'normal',
+              },
+              padding: {
+                bottom: 10
+              }
+            },
+            legend: { // add style legend
+              labels: {
+                color: '#6c757d',
+                boxWidth: 20,
+                boxHeight: 20,
+                usePointStyle: true,
+                pointStyle: 'rectRounded',
+                padding: 24
+                
+              }
+            },
+           
+
+
+          },
           scales: {
             x: {
               grid: {
@@ -89,6 +131,7 @@ export default {
               time: {
                 unit: 'month',
               },
+
               ticks: {
                 callback: (value, _index, _ticks) => {
                   const date = new Date(value)
@@ -121,8 +164,6 @@ export default {
   width: 50%;
   height: 500px;
   padding: 24px;
-
-  background: #F4F4F6;
   border-radius: 10px;
   box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
