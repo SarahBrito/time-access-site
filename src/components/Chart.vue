@@ -8,7 +8,6 @@
 <script>
 import 'chartjs-adapter-date-fns';
 import {formatedDate} from '../utils/formatedDate'
-
 import { ref, onMounted } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -16,6 +15,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 Chart.register(...registerables);
 Chart.register(zoomPlugin);
 
+//ORDENA OS VALORES EM ORDEM CRESCENTE
 const sortDates = (values) => {
   return values.sort((value1, value2) => {
     const dateA = new Date(value1.dateAccessed);
@@ -25,6 +25,7 @@ const sortDates = (values) => {
 }
 
 
+//CRIA NOVO ARRAY COM DATAS ÚNICAS + SITES CORRESPONDENTES
 const labelsFormat = (values) => {
   const uniqLabels = values.reduce((accumulator, value) => {
     if (!accumulator[value.dateAccessed]) accumulator[value.dateAccessed] = {
@@ -49,11 +50,13 @@ export default {
 
       const labels = labelsFormat(sortedFile)
 
+      //ARRAY DE WEBSITES ÚNICOS
       const websites = Object.keys(sortedFile.reduce((accumulator, value) => {
         if (!accumulator[value.url]) accumulator[value.url] = []
 
         return accumulator
       }, {}))
+
 
       const emptyDataSets = websites.map((website) => {
         return {
@@ -67,6 +70,7 @@ export default {
 
       const datasets = emptyDataSets
 
+      // PREENCHE OS DADOS NO GRÁFICO 
       sortedFile.forEach((value) => {
         datasets.forEach((dataset) => {
           if (value.url.replace(/https:\/\//, '') === dataset.label) {
@@ -75,11 +79,10 @@ export default {
         })
       })
 
+      // CONFIG ZOOM OPTIONS
       const zoomOptions = {
-
         pan: {
           enabled: true,
-
         },
         zoom: {
           wheel: {
@@ -90,8 +93,7 @@ export default {
           },
           mode: 'xy',
         }
-      };
-
+      }
 
       const borderPlugin = {
         id: 'chartAreaBorder',
@@ -105,7 +107,7 @@ export default {
             ctx.restore();
           }
         }
-      };
+      }
 
       chart.value = new Chart(chart.value, {
         type: 'line',
@@ -116,7 +118,7 @@ export default {
         options: {
           locale: 'pt-BR',
           responsive: true,
-
+          // maintainAspectRatio: false,
           interaction: {
             mode: 'index',
           },
@@ -146,9 +148,8 @@ export default {
                 },
               }
             },
-            //add line plugin
             zoom: zoomOptions,
-            title: {  //add style title 
+            title: {  
               display: true,
               align: 'start',
               text: 'Sites',
@@ -158,7 +159,7 @@ export default {
                 weight: 'bold',
               },
             },
-            subtitle: { //add style subtitle
+            subtitle: {
               display: true,
               align: 'start',
               text: 'Veja os acessos de cada site',
@@ -171,7 +172,7 @@ export default {
                 bottom: 10
               }
             },
-            legend: { // add style legend
+            legend: {
               labels: {
                 color: '#6c757d',
                 boxWidth: 20,
@@ -195,7 +196,8 @@ export default {
           scales: {
             x: {
               grid: {
-                drawOnChartArea: false,
+                display: false,
+                // drawOnChartArea: false,
               },
               type: 'time',
               time: {
@@ -232,10 +234,19 @@ export default {
   font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
-  width: 60%;
+  width: 50vw;
+  height: 60vh;
+  position: relative;
+  margin: auto;
   padding: 24px;
   border-radius: 10px;
   box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
+}
+
+canvas {
+  border: 1px solid #e1e2e3;
+  padding: 12px;
+  border-radius: 10px;
 }
 
 p {
