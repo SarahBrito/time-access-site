@@ -1,8 +1,9 @@
 <template>
   <div class="chart">
     <div class="filters">
+      <button class="btn one-month-ago" @click="() => handleClickFilter('7d')">7d</button>
       <button class="btn one-month-ago" @click="() => handleClickFilter('30d')">30d</button>
-      <button class="btn" @click="() => handleClickFilter('all')">Clear Filter</button>
+      <button class="btn" @click="() => handleClickFilter('all')">Tudo</button>
     </div>
     <Line id="chart-id" :options="chartOptions" :data="chartData" :plugins="chartPluggins" />
   </div>
@@ -16,7 +17,7 @@ import {
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import { Line } from 'vue-chartjs'
-import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
+import { endOfMonth, startOfMonth, subMonths, subDays } from 'date-fns';
 
 Chart.register(...registerables);
 Chart.register(zoomPlugin);
@@ -165,6 +166,18 @@ export default {
         labels: labelsFormat(dataOneMonthAgo),
         datasets: datasetsFormat(dataOneMonthAgo)
       }
+    },
+    last7DFilter(values) {
+      const sevenDaysAgo = subDays(new Date(), 7);
+      const dataSevenDaysAgo = sortedFile.filter((value) => {
+        const dateAccessed = new Date(value.dateAccessed);
+        return dateAccessed >= sevenDaysAgo && dateAccessed <= new Date();
+      });
+      console.log(dataSevenDaysAgo)
+      return {
+        labels: labelsFormat(dataSevenDaysAgo),
+        datasets: datasetsFormat(dataSevenDaysAgo)
+      }
     }
   },
   components: { Line },
@@ -175,8 +188,14 @@ export default {
           labels: labelsFormat(sortedFile),
           datasets: datasetsFormat(sortedFile)
         }
-      else {
+      else if (newValue === '30d'){
         const { labels, datasets } = this.last30DFilter(sortedFile)
+        this.chartData = {
+          labels,
+          datasets,
+        }
+      }else if (newValue === '7d'){
+        const { labels, datasets } = this.last7DFilter(sortedFile)
         this.chartData = {
           labels,
           datasets,
