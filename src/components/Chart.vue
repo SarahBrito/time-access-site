@@ -1,18 +1,27 @@
 <template>
   <div class="chart">
-    <canvas ref="chart"></canvas>
+    <div class="filters">
+      <button class="btn one-month-ago" @click="() => handleClickFilter('30d')">30d</button>
+      <button class="btn" @click="() => handleClickFilter('all')">Clear Filter</button>
+    </div>
+    <Line id="chart-id" :options="chartOptions" :data="chartData" :plugins="chartPluggins" />
   </div>
 </template>
 
 <script>
 import 'chartjs-adapter-date-fns';
-import {formatedDate} from '../utils/formatedDate'
-import { ref, onMounted } from 'vue';
+import {
+  zoomConfig, borderPlugin, tooltipConfig, titleConfig, subtitleConfig, legendConfig
+} from '../utils/chartUtils';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import { Line } from 'vue-chartjs'
+import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
 
 Chart.register(...registerables);
 Chart.register(zoomPlugin);
+const response = await fetch("/data.json");
+const file = await response.json();
 
 //ORDENA OS VALORES EM ORDEM CRESCENTE
 const sortDates = (values) => {
@@ -23,208 +32,161 @@ const sortDates = (values) => {
   })
 }
 
+const sortedFile = sortDates(file)
+
+const websites = Object.keys(sortedFile.reduce((accumulator, value) => {
+  if (!accumulator[value.url]) accumulator[value.url] = []
+
+  return accumulator
+}, {}))
 
 //CRIA NOVO ARRAY COM DATAS ÚNICAS + SITES CORRESPONDENTES
 const labelsFormat = (values) => {
   const uniqLabels = values.reduce((accumulator, value) => {
     if (!accumulator[value.dateAccessed]) accumulator[value.dateAccessed] = {
       date: value.dateAccessed,
-      website: value.url.replace(/https:\/\//, '').replace(/\.com/, ''),
+      website: value.url,
     };
     return accumulator;
   }, {})
-
   return Object.keys(uniqLabels)
 }
 
-export default {
-  setup() {
-    const chart = ref(null);
+const datasetsFormat = (values) => {
+  const summedData = [];
+  const labels = labelsFormat(values)
 
-    onMounted(async () => {
-      const response = await fetch("/data.json");
-      const file = await response.json();
+  labels.forEach((date) => {
+    websites.forEach((url) => {
+      const matchingEntry = values.filter((entry) =>
+        entry.dateAccessed === date && entry.url === url
+      );
 
-      const sortedFile = sortDates(file)
+      const timeSpent =
+        matchingEntry.length > 0 ?
+          matchingEntry.reduce(function (sum, value) {
+            return sum + value.timeSpent;
+          }, 0)
+          : 0;
 
-      const labels = labelsFormat(sortedFile)
-
-      //ARRAY DE WEBSITES ÚNICOS
-      const websites = Object.keys(sortedFile.reduce((accumulator, value) => {
-        if (!accumulator[value.url]) accumulator[value.url] = []
-
-        return accumulator
-      }, {}))
-
-
-      const emptyDataSets = websites.map((website) => {
-        return {
-          label: website.replace(/https:\/\//, ''),
-          data: [],
-          borderWidth: 1.5,
-          pointRadius: 0.1,
-          tension: 0.5,
-        }
-      })
-
-      const datasets = emptyDataSets
-
-      // PREENCHE OS DADOS NO GRÁFICO 
-      sortedFile.forEach((value) => {
-        datasets.forEach((dataset) => {
-          if (value.url.replace(/https:\/\//, '') === dataset.label) {
-            dataset.data.push(value.timeSpent)
-          }
-        })
-      })
-
-      // CONFIG ZOOM OPTIONS
-      const zoomOptions = {
-        pan: {
-          enabled: true,
-        },
-        zoom: {
-          wheel: {
-            enabled: false,
-          },
-          pinch: {
-            enabled: false
-          },
-          mode: 'xy',
-        }
-      }
-
-      const borderPlugin = {
-        id: 'chartAreaBorder',
-        beforeDraw(chart, args, options) {
-          const { ctx, chartArea: { left, top, width, height } } = chart;
-          if (chart.options.plugins.zoom.zoom.wheel.enabled) {
-            ctx.save();
-            ctx.strokeStyle = '#6c757d';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(left, top, width, height);
-            ctx.restore();
-          }
-        }
-      }
-
-      chart.value = new Chart(chart.value, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets,
-        },
-        options: {
-          locale: 'pt-BR',
-          responsive: true,
-          // maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-          },
-          plugins: {
-            tooltip: {
-              backgroundColor:'#22223b',
-              titleAlign: 'center',
-              usePointStyle: true,
-              padding: 16,
-              boxPadding: 4,
-              displayColors: true,
-              callbacks: {
-                labelPointStyle: function (context) {
-                  return {
-                    pointStyle: 'rectRounded',
-                    rotation: 0
-                  };
-                },
-                labelTextColor: function (context) {
-                  return '#eeee';
-                },
-                title: function (context) {
-                  const date = context[0].label
-                  const newDate = date.replace(', 12:00:00 a.m.', '')
-
-                  return formatedDate(newDate)                  
-                },
-              }
-            },
-            zoom: zoomOptions,
-            title: {  
-              display: true,
-              align: 'start',
-              text: 'Sites',
-              color: '#495057',
-              font: {
-                size: 20,
-                weight: 'bold',
-              },
-            },
-            subtitle: {
-              display: true,
-              align: 'start',
-              text: 'Veja os acessos de cada site',
-              color: '#6c757d',
-              font: {
-                size: 14,
-                weight: 'normal',
-              },
-              padding: {
-                bottom: 10
-              }
-            },
-            legend: {
-              labels: {
-                color: '#6c757d',
-                boxWidth: 20,
-                boxHeight: 20,
-                usePointStyle: true,
-                pointStyle: 'rectRounded',
-                padding: 24,
-              }
-            },
-
-          },
-
-          onClick(e) {
-            const chart = e.chart;
-            chart.options.plugins.zoom.zoom.wheel.enabled = !chart.options.plugins.zoom.zoom.wheel.enabled;
-            chart.options.plugins.zoom.zoom.pinch.enabled = !chart.options.plugins.zoom.zoom.pinch.enabled;
-
-            chart.update();
-          },
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              grid: {
-                display: false,
-                // drawOnChartArea: false,
-              },
-              type: 'time',
-              time: {
-                unit: 'month',
-              },
-
-              ticks: {
-                callback: (value, _index, _ticks) => {
-                  const date = new Date(value)
-                  return new Intl.DateTimeFormat('pt-BR', {
-                    month: 'short'
-                  }).format(date)
-                }
-              }
-            },
-            y: {
-              grid: {
-                display: true,
-              },
-            },
-          },
-        },
-        plugins: [borderPlugin],
+      summedData.push({
+        dateAccessed: date,
+        url: url,
+        timeSpent: timeSpent === 0 ? 0 : (timeSpent / matchingEntry.length).toFixed(0),
       });
     });
+  });
 
-    return { chart };
+  const datasets = websites.map((website) => {
+    const filtered = summedData.filter(item => item.url === website);
+    return {
+      label: website,
+      data: filtered.map(item => item.timeSpent),
+      borderWidth: 1.5,
+      pointRadius: 1,
+      tension: 0.5,
+    }
+  })
+
+  return datasets;
+}
+
+export default {
+  data() {
+    return {
+      filtered: "all",
+      chartData: {
+        labels: labelsFormat(sortedFile),
+        datasets: datasetsFormat(sortedFile)
+      },
+      chartOptions: {
+        locale: 'pt-BR',
+        responsive: true,
+        interaction: {
+          mode: 'index',
+        },
+        plugins: {
+          tooltip: tooltipConfig,
+          zoom: zoomConfig,
+          title: titleConfig,
+          subtitle: subtitleConfig,
+          legend: legendConfig,
+        },
+
+        onClick(e) {
+          const chart = e.chart;
+          chart.options.plugins.zoom.zoom.wheel.enabled = !chart.options.plugins.zoom.zoom.wheel.enabled;
+          chart.options.plugins.zoom.zoom.pinch.enabled = !chart.options.plugins.zoom.zoom.pinch.enabled;
+
+          chart.update();
+        },
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: {
+              display: false,
+            },
+            type: 'time',
+            time: {
+              unit: 'month',
+            },
+
+            ticks: {
+              callback: (value, _index, _ticks) => {
+                const date = new Date(value)
+                return new Intl.DateTimeFormat('pt-BR', {
+                  month: 'short'
+                }).format(date)
+              }
+            }
+          },
+          y: {
+            grid: {
+              display: true,
+            },
+          },
+        }
+      },
+      chartPluggins: [borderPlugin]
+    }
   },
+  computed: {},
+  methods: {
+    handleClickFilter(type) {
+      if (this.filtered === type) return;
+
+      this.filtered = type;
+    },
+    last30DFilter(values) {
+      const oneMonthAgo = subMonths(new Date(), 0)
+      console.log(oneMonthAgo)
+      const dataOneMonthAgo = sortedFile.filter((value) => {
+        const dateAccessed = new Date(value.dateAccessed)
+        return dateAccessed >= startOfMonth(oneMonthAgo) && dateAccessed <= endOfMonth(oneMonthAgo)
+      });
+      return {
+        labels: labelsFormat(dataOneMonthAgo),
+        datasets: datasetsFormat(dataOneMonthAgo)
+      }
+    }
+  },
+  components: { Line },
+  watch: {
+    filtered(newValue) {
+      if (newValue === "all")
+        this.chartData = {
+          labels: labelsFormat(sortedFile),
+          datasets: datasetsFormat(sortedFile)
+        }
+      else {
+        const { labels, datasets } = this.last30DFilter(sortedFile)
+        this.chartData = {
+          labels,
+          datasets,
+        }
+      }
+    }
+  }
 };
 </script>
 
@@ -233,13 +195,13 @@ export default {
   font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
-  width: 50vw;
-  height: 60vh;
+  width: 70vw;
+  height: 70vh;
   position: relative;
   margin: auto;
   padding: 24px;
   border-radius: 10px;
-  box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
 canvas {
@@ -260,7 +222,40 @@ span {
   font-weight: 600;
 }
 
-@media (max-width: 800px){
+.filters {
+  position: absolute;
+  top: 50px;
+  right: 36px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart .btn {
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 6px;
+  border: none;
+  background: #F3F4F6;
+  color: #B7BCC5;
+  cursor: pointer;
+  font-weight: 700;
+  transition: .3s;
+}
+
+.one-month-ago {
+  width: 40px;
+}
+
+.chart .btn:hover {
+  background: #F0F9FF;
+  color: #649EBB;
+}
+
+@media (max-width: 800px) {
   .chart {
     width: 98vw;
     padding: 24px 6px;
