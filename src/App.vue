@@ -16,7 +16,6 @@ export default {
 
 <style scoped>
   .container {
-    /* background: rgb(4, 4, 26); */
     height: 100vh;
     display: flex;
     justify-content: center;
