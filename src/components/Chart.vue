@@ -23,7 +23,6 @@ Chart.register(zoomPlugin);
 const response = await fetch("/data.json");
 const file = await response.json();
 
-//ORDENA OS VALORES EM ORDEM CRESCENTE
 const sortDates = (values) => {
   return values.sort((value1, value2) => {
     const dateA = new Date(value1.dateAccessed);
@@ -40,7 +39,6 @@ const websites = Object.keys(sortedFile.reduce((accumulator, value) => {
   return accumulator
 }, {}))
 
-//CRIA NOVO ARRAY COM DATAS ÚNICAS + SITES CORRESPONDENTES
 const labelsFormat = (values) => {
   const uniqLabels = values.reduce((accumulator, value) => {
     if (!accumulator[value.dateAccessed]) accumulator[value.dateAccessed] = {
@@ -159,7 +157,6 @@ export default {
     },
     last30DFilter(values) {
       const oneMonthAgo = subMonths(new Date(), 0)
-      console.log(oneMonthAgo)
       const dataOneMonthAgo = sortedFile.filter((value) => {
         const dateAccessed = new Date(value.dateAccessed)
         return dateAccessed >= startOfMonth(oneMonthAgo) && dateAccessed <= endOfMonth(oneMonthAgo)
