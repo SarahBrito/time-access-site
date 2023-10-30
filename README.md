@@ -1,7 +1,39 @@
-# Vue 3 + Vite
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+# Time Access Site
 
-## Recommended IDE Setup
+Mostra o tempo médio de acesso de cada site
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+
+## Demo
+
+https://time-access-site.vercel.app/
+
+
+## Setup
+
+1 -  Clone o repositório do projeto:
+
+```bash
+  git clone https://github.com/SarahBrito/time-access-site.git
+```
+
+2 - Navegue até o diretório do projeto:
+
+```bash
+ cd time-access-site
+```
+
+3 - Instale as dependências do projeto:
+
+```bash
+  npm install
+```
+
+### Running the project
+
+```bash
+  npm run dev
+```
+
+
+

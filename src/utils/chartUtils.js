@@ -69,7 +69,7 @@ export const titleConfig = {
 export const subtitleConfig = {
   display: true,
   align: 'start',
-  text: 'Veja os acessos de cada site',
+  text: 'Veja o tempo médio de acessos de cada site',
   color: '#6c757d',
   font: {
     size: 14,
@@ -89,4 +89,30 @@ export const legendConfig = {
     pointStyle: 'rectRounded',
     padding: 24,
   }
+}
+
+export const scalesConfig = {
+  x: {
+    grid: {
+      display: false,
+    },
+    type: 'time',
+    time: {
+      unit: 'month',
+    },
+
+    ticks: {
+      callback: (value, _index, _ticks) => {
+        const date = new Date(value)
+        return new Intl.DateTimeFormat('pt-BR', {
+          month: 'short'
+        }).format(date)
+      }
+    }
+  },
+  y: {
+    grid: {
+      display: true,
+    },
+  },
 }

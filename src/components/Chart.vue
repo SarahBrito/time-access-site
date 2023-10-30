@@ -1,8 +1,9 @@
 <template>
   <div class="chart">
     <div class="filters">
-      <button class="btn one-month-ago" @click="() => handleClickFilter('30d')">30d</button>
-      <button class="btn" @click="() => handleClickFilter('all')">Clear Filter</button>
+      <button class="btn" @click="() => handleClickFilter('7d')">7d</button>
+      <button class="btn" @click="() => handleClickFilter('30d')">30d</button>
+      <button class="btn" @click="() => handleClickFilter('all')">Tudo</button>
     </div>
     <Line id="chart-id" :options="chartOptions" :data="chartData" :plugins="chartPluggins" />
   </div>
@@ -11,12 +12,12 @@
 <script>
 import 'chartjs-adapter-date-fns';
 import {
-  zoomConfig, borderPlugin, tooltipConfig, titleConfig, subtitleConfig, legendConfig
+  zoomConfig, borderPlugin, tooltipConfig, titleConfig, subtitleConfig, legendConfig, scalesConfig
 } from '../utils/chartUtils';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import { Line } from 'vue-chartjs'
-import { endOfMonth, startOfMonth, subMonths } from 'date-fns';
+import { endOfMonth, startOfMonth, subMonths, subDays } from 'date-fns';
 
 Chart.register(...registerables);
 Chart.register(zoomPlugin);
@@ -78,7 +79,7 @@ const datasetsFormat = (values) => {
   const datasets = websites.map((website) => {
     const filtered = summedData.filter(item => item.url === website);
     return {
-      label: website,
+      label: website.replace(/https:\/\//, ''),
       data: filtered.map(item => item.timeSpent),
       borderWidth: 1.5,
       pointRadius: 1,
@@ -119,31 +120,7 @@ export default {
           chart.update();
         },
         maintainAspectRatio: false,
-        scales: {
-          x: {
-            grid: {
-              display: false,
-            },
-            type: 'time',
-            time: {
-              unit: 'month',
-            },
-
-            ticks: {
-              callback: (value, _index, _ticks) => {
-                const date = new Date(value)
-                return new Intl.DateTimeFormat('pt-BR', {
-                  month: 'short'
-                }).format(date)
-              }
-            }
-          },
-          y: {
-            grid: {
-              display: true,
-            },
-          },
-        }
+        scales: scalesConfig,
       },
       chartPluggins: [borderPlugin]
     }
@@ -165,6 +142,18 @@ export default {
         labels: labelsFormat(dataOneMonthAgo),
         datasets: datasetsFormat(dataOneMonthAgo)
       }
+    },
+    last7DFilter(values) {
+      const sevenDaysAgo = subDays(new Date(), 7);
+      const dataSevenDaysAgo = sortedFile.filter((value) => {
+        const dateAccessed = new Date(value.dateAccessed);
+        return dateAccessed >= sevenDaysAgo && dateAccessed <= new Date();
+      });
+      
+      return {
+        labels: labelsFormat(dataSevenDaysAgo),
+        datasets: datasetsFormat(dataSevenDaysAgo)
+      }
     }
   },
   components: { Line },
@@ -175,8 +164,14 @@ export default {
           labels: labelsFormat(sortedFile),
           datasets: datasetsFormat(sortedFile)
         }
-      else {
+      else if (newValue === '30d'){
         const { labels, datasets } = this.last30DFilter(sortedFile)
+        this.chartData = {
+          labels,
+          datasets,
+        }
+      }else if (newValue === '7d'){
+        const { labels, datasets } = this.last7DFilter(sortedFile)
         this.chartData = {
           labels,
           datasets,
@@ -207,23 +202,10 @@ canvas {
   border-radius: 10px;
 }
 
-p {
-  color: #6c757d;
-  padding: 5px;
-  font-size: 14px;
-  margin-top: 12px;
-}
-
-span {
-  color: #495057;
-  font-weight: 600;
-}
-
 .filters {
   position: absolute;
-  top: 50px;
+  top: 40px;
   right: 36px;
-
   display: flex;
   align-items: center;
   gap: 12px;
@@ -234,7 +216,7 @@ span {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px 6px;
+  padding: 8px;
   border: none;
   background: #F3F4F6;
   color: #B7BCC5;
@@ -242,11 +224,6 @@ span {
   font-weight: 700;
   transition: .3s;
 }
-
-.one-month-ago {
-  width: 40px;
-}
-
 .chart .btn:hover {
   background: #F0F9FF;
   color: #649EBB;
