@@ -1,4 +1,3 @@
-import {formatedDate} from './formatedDate' 
 
 export const zoomConfig = {
   pan: {
@@ -17,7 +16,7 @@ export const zoomConfig = {
 
 export const borderPlugin = {
   id: 'chartAreaBorder',
-  beforeDraw(chart, args, options) {
+  beforeDraw(chart, _args, _options) {
     const { ctx, chartArea: { left, top, width, height } } = chart;
     if (chart.options.plugins.zoom.zoom.wheel.enabled) {
       ctx.save();
@@ -31,31 +30,25 @@ export const borderPlugin = {
 
 export const tooltipConfig = {
   backgroundColor: '#22223b',
-  titleAlign: 'center',
   usePointStyle: true,
   padding: 16,
   boxPadding: 4,
   displayColors: true,
   callbacks: {
-    labelPointStyle: function (context) {
+    labelPointStyle: function (_context) {
       return {
         pointStyle: 'rectRounded',
         rotation: 0,
       };
     },
-    labelTextColor: function (context) {
+    labelTextColor: function (_context) {
       return '#eeee';
-    },
-    title: function (context) {
-      const date = context[0].label;
-      const newDate = date.replace(', 12:00:00 a.m.', '');
-      return formatedDate(newDate);
     },
   },
 };
 
 
-export const titleConfig = {  
+export const titleConfig = {
   display: true,
   align: 'start',
   text: 'Sites',
@@ -94,21 +87,8 @@ export const legendConfig = {
 export const scalesConfig = {
   x: {
     grid: {
-      display: false,
+      drawOnChartArea: false,
     },
-    type: 'time',
-    time: {
-      unit: 'month',
-    },
-
-    ticks: {
-      callback: (value, _index, _ticks) => {
-        const date = new Date(value)
-        return new Intl.DateTimeFormat('pt-BR', {
-          month: 'short'
-        }).format(date)
-      }
-    }
   },
   y: {
     grid: {
