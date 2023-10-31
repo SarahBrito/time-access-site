@@ -1,4 +1,4 @@
-import {formatedDate} from './formatedDate' 
+import { formatedDate } from './formatedDate'
 
 export const zoomConfig = {
   pan: {
@@ -55,7 +55,7 @@ export const tooltipConfig = {
 };
 
 
-export const titleConfig = {  
+export const titleConfig = {
   display: true,
   align: 'start',
   text: 'Sites',
@@ -94,21 +94,8 @@ export const legendConfig = {
 export const scalesConfig = {
   x: {
     grid: {
-      display: false,
+      drawOnChartArea: false,
     },
-    type: 'time',
-    time: {
-      unit: 'month',
-    },
-
-    ticks: {
-      callback: (value, _index, _ticks) => {
-        const date = new Date(value)
-        return new Intl.DateTimeFormat('pt-BR', {
-          month: 'short'
-        }).format(date)
-      }
-    }
   },
   y: {
     grid: {
