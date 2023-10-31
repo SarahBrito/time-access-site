@@ -1,4 +1,4 @@
-import { formatedDate } from './formatedDate'
+import { formatedMonth } from './formatedDate'
 
 export const zoomConfig = {
   pan: {
@@ -48,8 +48,8 @@ export const tooltipConfig = {
     },
     title: function (context) {
       const date = context[0].label;
-      const newDate = date.replace(', 12:00:00 a.m.', '');
-      return formatedDate(newDate);
+      const newDate = date.replace('.', '');
+      return formatedMonth(newDate);
     },
   },
 };

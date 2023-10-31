@@ -1,10 +1,5 @@
 <template>
   <div class="chart">
-    <div class="filters">
-      <button class="btn" @click="() => handleClickFilter('7d')">7d</button>
-      <button class="btn" @click="() => handleClickFilter('30d')">30d</button>
-      <button class="btn" @click="() => handleClickFilter('all')">Tudo</button>
-    </div>
     <Line id="chart-id" :options="chartOptions" :data="chartData" :plugins="chartPluggins" />
   </div>
 </template>
@@ -17,7 +12,7 @@ import {
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import { Line } from 'vue-chartjs'
-import { endOfMonth, startOfMonth, subMonths, subDays, eachMonthOfInterval, getMonth } from 'date-fns';
+import { startOfMonth, eachMonthOfInterval, getMonth} from 'date-fns';
 
 Chart.register(...registerables);
 Chart.register(zoomPlugin);
@@ -66,7 +61,7 @@ const datasetsFormat = (values) => {
     start: new Date(values[0].dateAccessed),
     end: new Date(values[values.length - 1].dateAccessed)
   })
-
+ 
   months.forEach((month) => {
     const currentMonth = getMonth(new Date(month));
 
@@ -106,11 +101,9 @@ const datasetsFormat = (values) => {
 
   return datasets;
 }
-
 export default {
   data() {
     return {
-      filtered: "all",
       chartData: {
         labels: labelsFormat(sortedFile),
         datasets: datasetsFormat(sortedFile)
@@ -118,83 +111,31 @@ export default {
       chartOptions: {
         locale: 'pt-BR',
         responsive: true,
-        // interaction: {
-        //   mode: 'index',
-        // },
-        plugins: {
-          // tooltip: tooltipConfig,
-          // zoom: zoomConfig,
-          // title: titleConfig,
-          // subtitle: subtitleConfig,
-          // legend: legendConfig,
+        interaction: {
+          mode: 'index',
         },
-        // onClick(e) {
-        //   const chart = e.chart;
-        //   chart.options.plugins.zoom.zoom.wheel.enabled = !chart.options.plugins.zoom.zoom.wheel.enabled;
-        //   chart.options.plugins.zoom.zoom.pinch.enabled = !chart.options.plugins.zoom.zoom.pinch.enabled;
+        plugins: {
+          tooltip: tooltipConfig,
+          zoom: zoomConfig,
+          title: titleConfig,
+          subtitle: subtitleConfig,
+          legend: legendConfig,
+        },
+        onClick(e) {
+          const chart = e.chart;
+          chart.options.plugins.zoom.zoom.wheel.enabled = !chart.options.plugins.zoom.zoom.wheel.enabled;
+          chart.options.plugins.zoom.zoom.pinch.enabled = !chart.options.plugins.zoom.zoom.pinch.enabled;
 
-        //   chart.update();
-        // },
+          chart.update();
+        },
         maintainAspectRatio: false,
         scales: scalesConfig,
       },
       chartPluggins: [borderPlugin]
     }
   },
-  computed: {},
-  methods: {
-    handleClickFilter(type) {
-      if (this.filtered === type) return;
-
-      this.filtered = type;
-    },
-    last30DFilter(values) {
-      const oneMonthAgo = subMonths(new Date(), 0)
-      const dataOneMonthAgo = values.filter((value) => {
-        const dateAccessed = new Date(value.dateAccessed)
-        return dateAccessed >= startOfMonth(oneMonthAgo) && dateAccessed <= endOfMonth(oneMonthAgo)
-      });
-      return {
-        labels: labelsFormat(dataOneMonthAgo),
-        datasets: datasetsFormat(dataOneMonthAgo)
-      }
-    },
-    last7DFilter(values) {
-      const sevenDaysAgo = subDays(new Date(), 7);
-      const dataSevenDaysAgo = values.filter((value) => {
-        const dateAccessed = new Date(value.dateAccessed);
-        return dateAccessed >= sevenDaysAgo && dateAccessed <= new Date();
-      });
-
-      return {
-        labels: labelsFormat(dataSevenDaysAgo),
-        datasets: datasetsFormat(dataSevenDaysAgo)
-      }
-    }
-  },
+ 
   components: { Line },
-  watch: {
-    filtered(newValue) {
-      if (newValue === "all")
-        this.chartData = {
-          labels: labelsFormat(sortedFile),
-          datasets: datasetsFormat(sortedFile)
-        }
-      else if (newValue === '30d') {
-        const { labels, datasets } = this.last30DFilter(sortedFile)
-        this.chartData = {
-          labels,
-          datasets,
-        }
-      } else if (newValue === '7d') {
-        const { labels, datasets } = this.last7DFilter(sortedFile)
-        this.chartData = {
-          labels,
-          datasets,
-        }
-      }
-    }
-  }
 };
 </script>
 
@@ -216,34 +157,6 @@ canvas {
   border: 1px solid #e1e2e3;
   padding: 12px;
   border-radius: 10px;
-}
-
-.filters {
-  position: absolute;
-  top: 40px;
-  right: 36px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.chart .btn {
-  border-radius: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px;
-  border: none;
-  background: #F3F4F6;
-  color: #B7BCC5;
-  cursor: pointer;
-  font-weight: 700;
-  transition: .3s;
-}
-
-.chart .btn:hover {
-  background: #F0F9FF;
-  color: #649EBB;
 }
 
 @media (max-width: 800px) {
